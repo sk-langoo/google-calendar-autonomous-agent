@@ -65,6 +65,10 @@ app.post("/chat", async (req, res, next) => { try {
     messages.push(reply);
     if (!reply.tool_calls?.length) return res.json({ message: reply.content ?? "" });
     for (const call of reply.tool_calls) {
+      if (call.type !== "function") {
+        messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify({ error: "Unsupported tool type" }) });
+        continue;
+      }
       const args = JSON.parse(call.function.arguments) as Record<string, unknown>;
       let result: unknown;
       if (call.function.name === "get_agenda") result = await calendar.agenda(String(args.start), String(args.end));
